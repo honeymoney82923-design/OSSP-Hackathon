@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "1. Run CLI Simulator in Terminal",
+      "type": "shell",
+      "command": "py simulator.py",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "2. Launch Interactive Web GUI",
+      "type": "shell",
+      "command": "Start-Process index.html",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "3. Launch Presentation Slides",
+      "type": "shell",
+      "command": "Start-Process presentation.html",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
