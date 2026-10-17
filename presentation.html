@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presentation: TLB and Page Table Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0e17;
+      --card-bg: #121826;
+      --accent: #00f2fe;
+      --accent-grad: linear-gradient(135deg, #00f2fe, #4facfe, #7f5af0);
+      --text: #fffffe;
+      --muted: #94a1b2;
+      --border: rgba(255,255,255,0.1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .slide-deck {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .slide {
+      position: absolute;
+      width: 90%;
+      max-width: 1100px;
+      height: 85vh;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3rem 4rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(20px) scale(0.98);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      overflow-y: auto;
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+    }
+    .slide-tag {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #4facfe;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 1.2rem;
+      background: var(--accent-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: #fff;
+    }
+    p, li {
+      font-size: 1.05rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    ul {
+      margin-left: 1.5rem;
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    strong { color: #fff; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-top: 1.5rem;
+    }
+    .feature-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      border-radius: 12px;
+    }
+    .feature-box h3 {
+      font-size: 1.15rem;
+      color: #00f2fe;
+      margin-bottom: 0.5rem;
+    }
+    .code-box {
+      background: #080b11;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      color: #a5b4fc;
+      margin-top: 1rem;
+    }
+    /* Controls Footer */
+    .controls-footer {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      background: rgba(18, 24, 38, 0.9);
+      border-top: 1px solid var(--border);
+    }
+    .nav-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: 0.2s;
+    }
+    .nav-btn:hover { background: #4facfe; color: #0a0e17; }
+    .slide-counter { font-size: 0.9rem; color: var(--muted); font-family: 'Fira Code', monospace; }
+    .btn-simulator {
+      background: var(--accent-grad);
+      color: #fff;
+      padding: 0.5rem 1.2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="slide-deck">
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+      <div class="slide-tag">OSSP Hackathon 2026 | Operating Systems Presentation</div>
+      <h1>TLB and Page Table Simulator</h1>
+      <p style="font-size: 1.25rem; color: #fff; margin-bottom: 2rem;">
+        An Interactive High-Performance Virtual-to-Physical Address Translation & Memory Architecture System
+      </p>
+      <div class="grid-2">
+        <div class="feature-box">
+          <h3>Team Deliverables</h3>
+          <p>Complete Working Prototype (GUI & CLI), Mathematical Verification (EAT), Benchmarking Suites, and Documentation.</p>
+        </div>
+        <div class="feature-box">
+          <h3>Core Topics Demonstrated</h3>
+          <p>Paging, Bit-level Address Decomposition, TLB Fast-Path Caching, LRU/FIFO Replacement, Demand Paging, and Page Fault Recovery.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2: Problem Statement -->
+    <div class="slide">
+      <div class="slide-tag">01. Problem Statement & Motivation</div>
+      <h2>The Memory Wall & Address Translation Bottleneck</h2>
+      <p>Modern OS architectures use Virtual Memory for isolation and protection. However, every memory reference requires translation from <strong>Virtual Address</strong> to <strong>Physical Address</strong>.</p>
+      <div class="grid-2">
+        <div class="feature-box">
+          <h3>The Challenge</h3>
+          <ul>
+            <li>Naive page table lookups double memory latency (1 access for Page Table + 1 for Data).</li>
+            <li>Multi-level page tables multiply latency by 3x to 5x.</li>
+            <li>Lack of intuitive visualization makes it hard to observe cache eviction & page fault penalties in real time.</li>
+          </ul>
+        </div>
+        <div class="feature-box">
+          <h3>Our Solution</h3>
+          <ul>
+            <li>Build a hardware-accurate simulator modeling TLB hit/miss and Page Fault behavior.</li>
+            <li>Provide real-time Effective Access Time (EAT) calculation.</li>
+            <li>Enable interactive parameter tuning (Page size, TLB size, LRU/FIFO).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: System Architecture -->
+    <div class="slide">
+      <div class="slide-tag">02. System Architecture</div>
+      <h2>Bit-Level Address Decomposition & Memory Layout</h2>
+      <p>Given an <em>N</em>-bit Virtual Address with page size <em>P = 2<sup>k</sup></em> bytes:</p>
+      <div class="code-box">
+        Virtual Address [16-bit] = [ VPN (Bits 15..k) | Offset (Bits k-1..0) ]<br>
+        Physical Address        = [ PFN (Frame #)     | Offset (Bits k-1..0) ]
+      </div>
+      <div class="grid-2">
+        <div class="feature-box">
+          <h3>Translation Lookaside Buffer (TLB)</h3>
+          <p>Fully associative on-chip hardware cache. Holds <code>{ Tag: VPN, Frame: PFN, Valid, LRU Age }</code>. Provides sub-2ns lookup speed.</p>
+        </div>
+        <div class="feature-box">
+          <h3>Page Table & Physical Memory</h3>
+          <p>Page Table stores mapping of all process pages. Frames in RAM are allocated dynamically via Demand Paging on page faults.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: Algorithms & Eviction Policies -->
+    <div class="slide">
+      <div class="slide-tag">03. Implementation & Algorithms</div>
+      <h2>Translation Pipeline & Replacement Policies</h2>
+      <div class="feature-box" style="margin-bottom: 1rem;">
+        <h3>The 4-Stage Translation Pipeline</h3>
+        <p><strong>1. Address Split:</strong> Compute <code>VPN = VA >> k</code>, <code>Offset = VA & ((1 << k) - 1)</code>.</p>
+        <p><strong>2. TLB Parallel Search:</strong> Check TLB entries. If Hit ➔ Form Physical Address in <strong>2 ns</strong>.</p>
+        <p><strong>3. Page Table Fallback:</strong> If Miss ➔ Lookup Page Table (100 ns). If Invalid ➔ Trigger <strong>Page Fault (8000 ns)</strong>.</p>
+        <p><strong>4. Cache Update:</strong> Insert into TLB via replacement policy.</p>
+      </div>
+      <div class="grid-2">
+        <div class="feature-box">
+          <h3>Least Recently Used (LRU)</h3>
+          <p>Tracks access timestamps. Evicts the entry whose last access was furthest in the past.</p>
+        </div>
+        <div class="feature-box">
+          <h3>First-In, First-Out (FIFO)</h3>
+          <p>Maintains allocation order. Evicts the oldest loaded entry regardless of access frequency.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: Mathematical Modeling & EAT -->
+    <div class="slide">
+      <div class="slide-tag">04. Mathematical Verification</div>
+      <h2>Effective Access Time (EAT) Analysis</h2>
+      <p>We mathematically compute and validate the latency reduction achieved by the TLB:</p>
+      <div class="code-box">
+        EAT = H * (t_tlb + t_mem) + (1 - H) * (t_tlb + 2 * t_mem)<br>
+        <br>
+        Where:<br>
+        &bull; H = TLB Hit Ratio<br>
+        &bull; t_tlb = TLB Access Time (typically 2 ns)<br>
+        &bull; t_mem = Main Memory Access Time (typically 100 ns)
+      </div>
+      <div class="grid-2">
+        <div class="feature-box">
+          <h3>Without TLB (Baseline)</h3>
+          <p>Access Time = <code>2 * t_mem = 200 ns</code> (100% overhead on every read/write).</p>
+        </div>
+        <div class="feature-box">
+          <h3>With 90% TLB Hit Ratio</h3>
+          <p><code>EAT = 0.90*(102ns) + 0.10*(202ns) = 91.8 + 20.2 = 112.0 ns</code> (44% speedup!).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: Live Features & Testing -->
+    <div class="slide">
+      <div class="slide-tag">05. Testing, Benchmarking & Results</div>
+      <h2>Experimental Workload Analysis</h2>
+      <div class="grid-2">
+        <div class="feature-box">
+          <h3>High Temporal Locality Benchmark</h3>
+          <p>Repeated accesses to hot code loops (e.g. Pages 1 & 2). <strong>Result:</strong> TLB Hit Ratio &gt; 87.5%, EAT drops to ~114 ns.</p>
+        </div>
+        <div class="feature-box">
+          <h3>Sequential Scan Benchmark</h3>
+          <p>Linear memory pass across adjacent memory addresses. Demonstrates spatial locality and periodic page crossings.</p>
+        </div>
+        <div class="feature-box">
+          <h3>Loop Thrashing Benchmark</h3>
+          <p>Accessing <em>N+1</em> pages in a loop with an <em>N</em>-slot TLB. Demonstrates pathological FIFO/LRU eviction.</p>
+        </div>
+        <div class="feature-box">
+          <h3>Dual Environment Support</h3>
+          <p>Runs seamlessly as an Interactive Web GUI (Zero install) AND a Python 3 CLI terminal tool.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: Team Contributions & Impact -->
+    <div class="slide">
+      <div class="slide-tag">06. Conclusion & Impact</div>
+      <h2>Impact, Team Contributions & Q&A</h2>
+      <div class="grid-2">
+        <div class="feature-box">
+          <h3>Team Responsibilities</h3>
+          <ul>
+            <li><strong>Member 1:</strong> System Architecture, Memory Math (EAT), Address Bit Decomposition.</li>
+            <li><strong>Member 2:</strong> TLB Cache Engine, LRU & FIFO Replacement, Page Table Logic.</li>
+            <li><strong>Member 3:</strong> Interactive Visualizer, Real-time Pipeline Animation, UI Design.</li>
+            <li><strong>Member 4:</strong> Testing, Benchmark Workload Validation, CLI Implementation & Docs.</li>
+          </ul>
+        </div>
+        <div class="feature-box">
+          <h3>Educational & Engineering Impact</h3>
+          <ul>
+            <li>Bridges theoretical OS textbooks with tangible, animated execution.</li>
+            <li>Enables students and developers to experiment with TLB sizing tradeoffs.</li>
+            <li>Open-source, lightweight, and zero external dependencies.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Navigation -->
+  <footer class="controls-footer">
+    <div>
+      <button class="nav-btn" id="prev-btn">&larr; Previous</button>
+      <button class="nav-btn" id="next-btn">Next &rarr;</button>
+    </div>
+    <div class="slide-counter" id="slide-num">Slide 1 / 7</div>
+    <div>
+      <a href="index.html" class="btn-simulator">Launch Live Simulator &rarr;</a>
+    </div>
+  </footer>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const counter = document.getElementById('slide-num');
+    let currentSlide = 0;
+
+    function showSlide(index) {
+      slides.forEach((s, i) => s.classList.toggle('active', i === index));
+      counter.textContent = `Slide ${index + 1} / ${slides.length}`;
+    }
+
+    prevBtn.addEventListener('click', () => {
+      if (currentSlide > 0) { currentSlide--; showSlide(currentSlide); }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (currentSlide < slides.length - 1) { currentSlide++; showSlide(currentSlide); }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        if (currentSlide < slides.length - 1) { currentSlide++; showSlide(currentSlide); }
+      } else if (e.key === 'ArrowLeft') {
+        if (currentSlide > 0) { currentSlide--; showSlide(currentSlide); }
+      }
+    });
+  </script>
+</body>
+</html>

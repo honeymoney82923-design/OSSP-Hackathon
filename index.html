@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TLB & Page Table Simulator | Virtual Memory Architecture</title>
+  <meta name="description" content="Interactive Virtual-to-Physical Address Translation Simulator with TLB Cache, Page Table, Frame Allocation, and Effective Access Time (EAT) Metrics.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+            <line x1="6" y1="6" x2="6.01" y2="6"></line>
+            <line x1="6" y1="18" x2="6.01" y2="18"></line>
+          </svg>
+        </div>
+        <div>
+          <h1>TLB & Page Table Architecture Simulator</h1>
+          <p class="subtitle">Virtual-to-Physical Memory Translation & Performance Analyzer</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="presentation.html" target="_blank" class="btn btn-secondary" id="btn-open-presentation">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Open Presentation (PPT)
+        </a>
+        <button class="btn btn-primary" id="btn-config-toggle">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Configure Memory
+        </button>
+      </div>
+    </header>
+
+    <!-- Top KPI Cards -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">TLB Hit Ratio</div>
+        <div class="kpi-value" id="kpi-tlb-hit-rate">0.0%</div>
+        <div class="kpi-sub" id="kpi-tlb-counts">0 Hits / 0 Total</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill fill-green" id="bar-tlb-hit" style="width: 0%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Page Fault Rate</div>
+        <div class="kpi-value" id="kpi-page-fault-rate">0.0%</div>
+        <div class="kpi-sub" id="kpi-fault-counts">0 Faults / 0 Lookups</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill fill-red" id="bar-fault-rate" style="width: 0%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Effective Access Time (EAT)</div>
+        <div class="kpi-value" id="kpi-eat">-- ns</div>
+        <div class="kpi-sub" id="kpi-eat-formula">Formula: H(t_tlb + t_m) + (1-H)(t_tlb + 2t_m)</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill fill-cyan" style="width: 100%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Memory Utilization</div>
+        <div class="kpi-value" id="kpi-ram-usage">0 / 8 Frames</div>
+        <div class="kpi-sub" id="kpi-policy-badge">Policy: LRU | Page: 4096B</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill fill-purple" id="bar-ram-usage" style="width: 0%"></div></div>
+      </div>
+    </section>
+
+    <!-- Main Workspace -->
+    <div class="workspace-layout">
+      <!-- Left Column: Controls & Hardware Modules -->
+      <div class="col-left">
+        <!-- Interactive Control Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Address Translation Input</h2>
+            <span class="badge" id="badge-status">Ready</span>
+          </div>
+          <div class="panel-body">
+            <div class="input-group">
+              <label for="input-virtual-address">Virtual Address (Hex or Decimal)</label>
+              <div class="input-with-button">
+                <input type="text" id="input-virtual-address" placeholder="e.g. 0x1A4C or 6732" value="0x1A4C" />
+                <button class="btn btn-primary" id="btn-translate">Translate</button>
+                <button class="btn btn-secondary" id="btn-random-addr">Random</button>
+              </div>
+            </div>
+
+            <!-- Bit Decomposition Preview -->
+            <div class="address-breakdown-box">
+              <div class="breakdown-title">Address Decomposition (16-bit Virtual Address Space)</div>
+              <div class="bit-breakdown-bar">
+                <div class="bit-chunk vpn-chunk" id="visual-vpn-chunk">
+                  <span class="chunk-label">Page Number (VPN)</span>
+                  <span class="chunk-value" id="breakdown-vpn">0x1 (Page 1)</span>
+                  <span class="chunk-bits" id="breakdown-vpn-bits">Bits 15-12 [0001]</span>
+                </div>
+                <div class="bit-chunk offset-chunk" id="visual-offset-chunk">
+                  <span class="chunk-label">Offset (d)</span>
+                  <span class="chunk-value" id="breakdown-offset">0xA4C (2636)</span>
+                  <span class="chunk-bits" id="breakdown-offset-bits">Bits 11-0 [101001001100]</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Workloads & Simulation Controls -->
+            <div class="workloads-section">
+              <label>Preset Benchmark Workloads:</label>
+              <div class="btn-group">
+                <button class="btn btn-sm btn-ghost" data-workload="temporal">High Temporal Locality</button>
+                <button class="btn btn-sm btn-ghost" data-workload="spatial">Sequential Scan</button>
+                <button class="btn btn-sm btn-ghost" data-workload="loop">Loop Pattern</button>
+                <button class="btn btn-sm btn-ghost" data-workload="random">Random Thrashing</button>
+              </div>
+            </div>
+
+            <div class="simulation-actions">
+              <button class="btn btn-success" id="btn-run-workload">▶ Run Workload Batch</button>
+              <button class="btn btn-warning" id="btn-step-walk">Step-by-Step Translation</button>
+              <button class="btn btn-danger" id="btn-reset">Reset All</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Translation Flow Pipeline Animation / Status Box -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Translation Stage Pipeline</h2>
+            <span class="badge" id="step-badge">Idle</span>
+          </div>
+          <div class="panel-body">
+            <div class="pipeline-container">
+              <div class="pipeline-step" id="pipe-step-1">
+                <div class="step-circle">1</div>
+                <div class="step-title">Address Split</div>
+                <div class="step-desc">Extract VPN & Offset</div>
+              </div>
+              <div class="pipeline-arrow">➔</div>
+              <div class="pipeline-step" id="pipe-step-2">
+                <div class="step-circle">2</div>
+                <div class="step-title">TLB Lookup</div>
+                <div class="step-desc">Check Tag in Cache</div>
+              </div>
+              <div class="pipeline-arrow">➔</div>
+              <div class="pipeline-step" id="pipe-step-3">
+                <div class="step-circle">3</div>
+                <div class="step-title">Page Table</div>
+                <div class="step-desc">Resolve PFN or Fault</div>
+              </div>
+              <div class="pipeline-arrow">➔</div>
+              <div class="pipeline-step" id="pipe-step-4">
+                <div class="step-circle">4</div>
+                <div class="step-title">Physical Address</div>
+                <div class="step-desc">Assemble (PFN << s) + Offset</div>
+              </div>
+            </div>
+            <div class="stage-result-box" id="stage-result-text">
+              Enter an address and click <strong>Translate</strong> to see the complete architectural path.
+            </div>
+          </div>
+        </div>
+
+        <!-- Translation History / Log Output -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2>System Execution Log</h2>
+            <button class="btn btn-sm btn-ghost" id="btn-clear-log">Clear Log</button>
+          </div>
+          <div class="panel-body log-container" id="system-log">
+            <div class="log-entry system">[SYSTEM INITIALIZED] Page Size: 4096B, TLB: 4 Slots, RAM: 8 Frames. Ready.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Memory Structures (TLB, Page Table, Physical RAM) -->
+      <div class="col-right">
+        <!-- TLB Visualizer -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="title-with-badge">
+              <h2>Translation Lookaside Buffer (TLB)</h2>
+              <span class="badge badge-accent" id="tlb-policy-tag">Policy: LRU</span>
+            </div>
+            <span class="subtext">Fully Associative Fast Cache</span>
+          </div>
+          <div class="panel-body table-responsive">
+            <table class="data-table" id="tlb-table">
+              <thead>
+                <tr>
+                  <th>Slot</th>
+                  <th>Valid</th>
+                  <th>VPN (Tag)</th>
+                  <th>PFN (Frame)</th>
+                  <th>Access / Age</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="tlb-body">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Page Table Visualizer -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Page Table (Single-Level / Hierarchical Model)</h2>
+            <span class="subtext" id="pt-info-tag">16 Virtual Pages mapped</span>
+          </div>
+          <div class="panel-body table-responsive pt-scroll-container">
+            <table class="data-table" id="pt-table">
+              <thead>
+                <tr>
+                  <th>Page # (VPN)</th>
+                  <th>Present / Valid</th>
+                  <th>Frame # (PFN)</th>
+                  <th>Referenced</th>
+                  <th>Dirty</th>
+                  <th>State</th>
+                </tr>
+              </thead>
+              <tbody id="pt-body">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Physical Memory (RAM) Frames Visualizer -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Physical Memory (RAM) Allocation</h2>
+            <span class="subtext" id="ram-info-tag">8 Frames (Total 32 KB)</span>
+          </div>
+          <div class="panel-body">
+            <div class="frames-grid" id="ram-frames-grid">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuration Modal -->
+    <div class="modal-overlay" id="config-modal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Memory Architecture Settings</h3>
+          <button class="modal-close" id="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cfg-page-size">Page Size</label>
+              <select id="cfg-page-size">
+                <option value="256">256 Bytes (Offset: 8 bits)</option>
+                <option value="1024">1 KB (Offset: 10 bits)</option>
+                <option value="4096" selected>4 KB (Offset: 12 bits)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cfg-tlb-size">TLB Capacity (Entries)</label>
+              <select id="cfg-tlb-size">
+                <option value="2">2 Entries</option>
+                <option value="4" selected>4 Entries</option>
+                <option value="8">8 Entries</option>
+                <option value="16">16 Entries</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cfg-replacement-policy">TLB Replacement Policy</label>
+              <select id="cfg-replacement-policy">
+                <option value="LRU" selected>Least Recently Used (LRU)</option>
+                <option value="FIFO">First In, First Out (FIFO)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cfg-ram-frames">Physical Memory Frames</label>
+              <select id="cfg-ram-frames">
+                <option value="4">4 Frames (16 KB)</option>
+                <option value="8" selected>8 Frames (32 KB)</option>
+                <option value="16">16 Frames (64 KB)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cfg-tlb-time">TLB Access Time (ns)</label>
+              <input type="number" id="cfg-tlb-time" value="2" min="1" max="100">
+            </div>
+            <div class="form-group">
+              <label for="cfg-mem-time">Main Memory Access Time (ns)</label>
+              <input type="number" id="cfg-mem-time" value="100" min="10" max="1000">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cfg-fault-penalty">Page Fault Penalty (ns)</label>
+              <input type="number" id="cfg-fault-penalty" value="8000" min="1000" max="50000000">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+          <button class="btn btn-primary" id="modal-save">Apply Architecture Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
